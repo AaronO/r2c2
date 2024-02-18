@@ -1,0 +1,15 @@
+{
+  "name": "r2c2",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "deploy": "cd example && wrangler deploy",
+    "start": "cd example && wrangler dev",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20230419.0",
+    "typescript": "^5.0.4",
+    "wrangler": "^3.0.0"
+  }
+}

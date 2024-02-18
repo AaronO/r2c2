@@ -1,0 +1,27 @@
+name = "r2c2"
+main = "./worker.ts"
+compatibility_date = "2024-02-08"
+
+routes = [
+  { pattern = "r2c2.aarono.dev/*", zone_name = "aarono.dev" },
+]
+
+[[r2_buckets]]
+binding = "R2C2_APAC"
+bucket_name = "r2c2-apac"
+
+[[r2_buckets]]
+binding = "R2C2_EEUR"
+bucket_name = "r2c2-eeur"
+
+[[r2_buckets]]
+binding = "R2C2_ENAM"
+bucket_name = "r2c2-enam"
+
+[[r2_buckets]]
+binding = "R2C2_WEUR"
+bucket_name = "r2c2-weur"
+
+[[r2_buckets]]
+binding = "R2C2_WNAM"
+bucket_name = "r2c2-wnam"
