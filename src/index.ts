@@ -39,11 +39,20 @@ function defaultC2Key(req: Request): Request {
   return req;
 }
 
+function ctxWait(ctx: ExecutionContext | undefined, x: Promise<any>): Promise<void> {
+  if (ctx) {
+    ctx.waitUntil(x);
+    return Promise.resolve();
+  }
+  return x.then(() => {}, () => {}) as Promise<void>;
+}
+
 export async function serveR2C2(r2c2: R2C2, req: Request, conf?: R2C2Config): Promise<Response> {
   const c2Key = conf?.c2Key ? conf.c2Key(req) : defaultC2Key(req);
   const r2Key = conf?.r2Key ? conf.r2Key(req) : defaultR2Key(req);
   const cache = conf?.cache ?? caches.default;
   const ttl = conf?.ttl ?? (() => 0);
+  const wait = ctxWait.bind(null, conf?.ctx);
 
   switch (req.method) {
     case 'PUT':
@@ -59,11 +68,7 @@ export async function serveR2C2(r2c2: R2C2, req: Request, conf?: R2C2Config): Pr
       );
       await Promise.all(puts.promises);
       // Invalidate cache
-      if (conf?.ctx) {
-        conf.ctx.waitUntil(cache.delete(c2Key));
-      } else {
-        await cache.delete(c2Key);
-      }
+      await wait(cache.delete(c2Key));
       return new Response(`Put ${r2Key} successfully!`);
     case 'GET':
       // Attempt to fetch from cache first
@@ -92,11 +97,7 @@ export async function serveR2C2(r2c2: R2C2, req: Request, conf?: R2C2Config): Pr
 
       // Cache the response
       if (ottl > 0) {
-        if (conf?.ctx) {
-          conf.ctx.waitUntil(cache.put(c2Key, response.clone()));
-        } else {
-          await cache.put(c2Key, response.clone());
-        }
+        await wait(cache.put(c2Key, response.clone()));
       }
 
       return response;
@@ -104,7 +105,7 @@ export async function serveR2C2(r2c2: R2C2, req: Request, conf?: R2C2Config): Pr
       // Propagate deletes to all buckets in parallel
       await Promise.all(allR2(r2c2).map((b) => b.delete(r2Key)));
       // Invalidate cache
-      await cache.delete(c2Key);
+      await wait(cache.delete(c2Key));
       return new Response('Deleted!');
 
     default:
