@@ -6,16 +6,20 @@ const FALLBACK_ORDER: LocationHint[] = ['enam', 'wnam', 'apac', 'weur', 'eeur'];
 // One must be non-empty
 export type R2C2 = Record<LocationHint, R2Bucket | undefined>;
 
-export function nearestR2(r2c2: R2C2, req: Request): R2Bucket {
+export function nearestRegion(r2c2: R2C2, req: Request): LocationHint {
   const location = reqLocation(req);
   if (location && r2c2[location] !== undefined) {
-    return r2c2[location]!;
+    return location;
   }
   const fallback = FALLBACK_ORDER.find((region) => r2c2[region]);
   if (fallback) {
-    return r2c2[fallback]!;
+    return fallback;
   }
   throw new Error('No bucket found');
+}
+
+export function nearestR2(r2c2: R2C2, req: Request): R2Bucket {
+  return r2c2[nearestRegion(r2c2, req)]!;
 }
 
 function allR2(r2c2: R2C2): R2Bucket[] {
@@ -89,6 +93,7 @@ export async function serveR2C2(r2c2: R2C2, req: Request, conf?: R2C2Config): Pr
       const headers = new Headers();
       object.writeHttpMetadata(headers);
       headers.set('etag', object.httpEtag);
+      headers.set('x-region', nearestRegion(r2c2, req));
       if (ottl > 0) {
         headers.set('Cache-Control', `public, max-age=${ottl}`);
       }
